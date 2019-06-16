@@ -1,0 +1,73 @@
+---
+title: "Semenogelins expression analysis"
+author: "*Alena Kizenko*"
+date: "June 16, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### **Attaching required libraries and loading data tables**
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(pheatmap)
+```
+
+#### **Analysing initial expression values. Data is already log-transformed and normalized**
+
+```{r}
+df_squam = read.csv('data/GSE3268.csv', sep = '\t', stringsAsFactors = FALSE)
+df_squam = df_squam[,-1]
+df_squam = df_squam[,-2]
+df_squam = df_squam[-c(1:2),]
+str(df_squam)
+df_squam[,-1] = sapply(df_squam[,-1], as.numeric)
+colnames(df_squam) = c("GeneSymbol", "X31_normal_tissue", "X31_squamous_carcinoma", "X33_normal_tissue",
+"X33_squamous_carcinoma", "X35_normal_tissue",
+"X35_squamous_carcinoma", "X36_normal_tissue", "X36_squamous_carcinoma",
+"X42_normal_tissue", "X42_squamous_carcinoma")
+```
+
+```{r}
+mdat_squam = df_squam%>% gather(key = Samples, value = val, -GeneSymbol)
+ggplot(mdat_squam, aes(Samples, val)) +
+  geom_boxplot(aes(fill = Samples)) +
+  theme_classic() +
+scale_y_continuous(name = 'Log2 fold-change') +
+   theme(axis.text.x=element_blank(),
+     axis.ticks.x=element_blank()) +
+  scale_x_discrete(name = 'Samples')
+
+ggplot(mdat_squam, aes(GeneSymbol, val)) +
+  geom_point(aes(color = Samples), size = 0.5) +
+  theme_classic() +
+scale_y_continuous(name = 'Log2 fold-change') +
+  theme(axis.text.x=element_blank(),
+     axis.ticks.x=element_blank()) +
+  scale_x_discrete(name = 'Genes')
+```
+
+#### **Subseting data to two genes: SEMG1 and SEMG2**
+
+```{r}
+df_sq = subset(df_squam, GeneSymbol == 'SEMG2' | GeneSymbol == 'SEMG1')
+df_sq = df_sq[,c(1,2,4,6,8,10,3,5,7,9, 11)]
+```
+
+#### **Plotting heatmap**
+
+```{r}
+df1 = as.matrix(df_sq[,-1])
+rownames(df1) = c('SEMG2', 'SEMG1')
+aka2 = data.frame(Tissue = factor(rep(c("Normal","Cancer"), each=5)))
+rownames(aka2) = colnames(df1)
+ann_colors = list(Tissue = c(Normal = "#FFFFFF", Cancer = "#333333"))
+pheatmap(df1, color = colorRampPalette(c("darkblue", "white", "red3"), bias = 0.7)(100), cellwidth = 25, cellheight = 25,
+         cluster_rows = FALSE, cluster_cols = FALSE, annotation_col = aka2, annotation_colors = ann_colors,
+         show_colnames = FALSE, annotation_names_col = TRUE)
+```
+

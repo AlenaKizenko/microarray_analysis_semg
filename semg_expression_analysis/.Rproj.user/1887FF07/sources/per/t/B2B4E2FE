@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1560692580198.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2648580237",
+    "id" : "B2B4E2FE",
+    "lastKnownWriteTime" : 1560692586,
+    "last_content_update" : 1560692586741,
+    "path" : "~/Documents/lab/semg_expression/semg_expression_analysis/semg_expression_squamous_carcinoma.Rmd",
+    "project_path" : "semg_expression_squamous_carcinoma.Rmd",
+    "properties" : {
+        "cursorPosition" : "22,25",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

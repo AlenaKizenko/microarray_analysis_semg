@@ -1,0 +1,109 @@
+---
+title: "Semenogelins expression analysis in lung cancer cell culture panel"
+author: "Alena Kizenko"
+date: "June 16, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### **Attaching required libraries and loading data tables**
+
+```{r}
+library(ggplot2)
+library(tidyr)
+library(pheatmap)
+library(preprocessCore)
+```
+
+#### **Analysing initial expression values. Data is not normalized**
+
+```{r}
+df_panel = read.csv('data/GSE4127.csv', sep = '\t', stringsAsFactors = FALSE)
+df_panel = df_panel[,-1]
+df_panel = df_panel[,-2]
+df_panel = df_panel[-c(1:2),]
+df_panel[,-1] = sapply(df_panel[,-1], as.numeric)
+str(df_panel)
+```
+
+```{r}
+mdat_panel = df_panel%>% gather(key = Samples, value = val, -Gene.symbol)
+ggplot(mdat_panel, aes(Samples, val)) +
+  geom_boxplot(aes(fill = Samples)) +
+  theme_classic() +
+scale_y_continuous(name = 'Fold-change') +
+   theme(axis.text.x=element_blank(),
+     axis.ticks.x=element_blank()) +
+  scale_x_discrete(name = 'Samples')
+
+ggplot(mdat_panel, aes(Gene.symbol, val)) +
+  geom_point(aes(color = Samples), size = 0.5) +
+  theme_classic() +
+scale_y_continuous(name = 'Fold-change') +
+  theme(axis.text.x=element_blank(),
+     axis.ticks.x=element_blank()) +
+  scale_x_discrete(name = 'Genes')
+```
+
+#### **Performing log2-transformation and quantile-quantile normalization**
+
+```{r}
+df_log <- log2(df_panel[,-1])
+df1_log = as.data.frame(df_log)
+df1_log$GeneSymbol = df_panel$Gene.symbol
+mdat_log= df1_log%>% gather(key = Samples, value = val, -GeneSymbol)
+ggplot(mdat_log, aes(Samples, val)) +
+  geom_boxplot(aes(fill = Samples)) +
+  scale_x_discrete(name = 'Samples') +
+  scale_y_continuous(name = 'Log2 fold-change') +
+  theme_classic() +
+  theme(axis.text.x=element_blank(),
+     axis.ticks.x=element_blank())
+
+df_norm <- as.data.frame(normalize.quantiles(data.matrix(df_log)),copy=T)
+df_norm$Gene.symbol = df_panel$Gene.symbol
+df_norm = df_norm[,c(30,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29)]
+colnames(df_norm) = colnames(df_panel)
+mdat_norm= df_norm%>% gather(key = Samples, value = val, -Gene.symbol)
+ggplot(mdat_norm, aes(Samples, val)) +
+  geom_boxplot(aes(fill = Samples)) +
+   theme_classic() +
+ scale_x_discrete(name = 'Samples') +
+  scale_y_continuous(name = 'Log2 fold-change') +
+   theme(axis.text.x=element_blank(),
+     axis.ticks.x=element_blank())
+
+ggplot(mdat_norm, aes(Gene.symbol, val)) +
+  geom_point(aes(color = Samples), size = 0.5) +
+  theme_classic() +
+  scale_y_continuous(name = 'Log2 fold-change') +
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  scale_x_discrete(name = 'Genes')
+```
+
+
+#### **Subseting data to two genes: SEMG1 and SEMG2**
+
+```{r}
+df_semg = subset(df_norm, Gene.symbol == 'SEMG2' | Gene.symbol == 'SEMG1')
+df_semg = df_semg[, c(1,8,9,10,11,17,19,20,21,29,30,7,14,15,18,23,25,26,27,28,2,3,4,5,6,12,13,16,22,24)]
+```
+
+#### **Plotting heatmap**
+
+```{r}
+mat = as.matrix(df_semg[, -1])
+rownames(mat) = c('SEMG1', 'SEMG2')
+annotation_lines = data.frame("Cell line" = c('small cell lung carcinoma',	'small cell lung carcinoma',	'small cell lung carcinoma',	'small cell lung carcinoma',	'small cell lung carcinoma', 'small cell lung carcinoma',	'small cell lung carcinoma',	'small cell lung carcinoma',	'small cell lung carcinoma',	'small cell lung carcinoma',	'squamous cell lung carcinoma',	'squamous cell lung carcinoma',	'squamous cell lung carcinoma',	'squamous cell lung carcinoma',	'squamous cell lung carcinoma',	'squamous cell lung carcinoma',	'squamous cell lung carcinoma',	'squamous cell lung carcinoma',	'squamous cell lung carcinoma', 'adenocarcinoma',	'adenocarcinoma',	'adenocarcinoma',	'adenocarcinoma',	'adenocarcinoma',	'adenocarcinoma',	'adenocarcinoma',	'adenocarcinoma',	'adenocarcinoma',	'adenocarcinoma'), check.names = FALSE)
+ann_colors_lines = list("Cell line" = c('small cell lung carcinoma' = "seagreen", 'squamous cell lung carcinoma' = "orchid4", 'adenocarcinoma' = "salmon3"))
+rownames(annotation_lines) = colnames(mat)
+pheatmap(mat, color = colorRampPalette(c("darkblue", "white", "red3"), bias = 1)(100), cellwidth = 10, cellheight = 10, 
+         cluster_rows = FALSE, cluster_cols = FALSE, annotation_col = annotation_lines,
+         annotation_colors = ann_colors_lines, fontsize = 8,
+         show_colnames = TRUE, annotation_names_col = TRUE)
+```
+
